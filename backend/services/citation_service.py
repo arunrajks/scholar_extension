@@ -189,5 +189,7 @@ def format_all_citations(paper: ScholarlyPaper):
         "Harvard": generate_harvard(paper),
         "Vancouver": generate_vancouver(paper),
         "Chicago": generate_chicago(paper),
-        "MLA": generate_mla(paper)
+        "MLA": generate_mla(paper),
+        "Cell": generate_nature(paper), # Nature style is a good default for Cell
+        "Lancet": generate_vancouver(paper) # Lancet uses Vancouver style
     }
