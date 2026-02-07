@@ -55,10 +55,28 @@
 
         <div id="collection-view" class="results-list hidden">
             <div class="collection-header">
-                <h3>Collected References</h3>
+                <div class="collection-title-group">
+                    <h3>My Collected List</h3>
+                    <div class="collection-style-hint">Search journal style:</div>
+                    <div class="search-style-container">
+                        <input list="citation-styles" id="export-style-input" placeholder="e.g. Nature, IEEE..."
+                            value="Standard (Numbered)">
+                        <datalist id="citation-styles">
+                            <option value="Standard (Numbered)">
+                            <option value="APA">
+                            <option value="Nature">
+                            <option value="Science">
+                            <option value="IEEE">
+                            <option value="Harvard">
+                            <option value="Vancouver">
+                            <option value="Chicago">
+                            <option value="MLA">
+                        </datalist>
+                    </div>
+                </div>
                 <div class="collection-actions">
                     <button id="clear-collection" class="btn-secondary">Clear</button>
-                    <button id="export-collection" class="btn-primary">Export All (.txt)</button>
+                    <button id="export-collection" class="btn-primary">Export All</button>
                 </div>
             </div>
             <div id="collection-list"></div>

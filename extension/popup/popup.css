@@ -468,6 +468,41 @@ header p {
     color: var(--text-main);
 }
 
+.collection-title-group {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.collection-style-hint {
+    font-size: 10px;
+    color: var(--text-muted);
+    font-weight: 600;
+    text-transform: uppercase;
+    margin-top: 4px;
+}
+
+#export-style-input {
+    font-family: inherit;
+    font-size: 11px;
+    padding: 6px 10px;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    background: #f8fafc;
+    color: var(--text-main);
+    outline: none;
+    cursor: pointer;
+    width: 100%;
+    margin-top: 4px;
+    transition: all 0.2s;
+}
+
+#export-style-input:focus {
+    border-color: var(--primary);
+    background: white;
+    box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.1);
+}
+
 .collection-actions {
     display: flex;
     gap: 8px;

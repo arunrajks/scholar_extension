@@ -115,9 +115,10 @@ document.addEventListener('DOMContentLoaded', () => {
         if (index > -1) {
             collectedCitations.splice(index, 1);
         } else {
+            // Keep the entire formatted_citations map for flexibility
             collectedCitations.push({
                 title: paper.title,
-                standard: paper.formatted_citations.Standard,
+                citations: paper.formatted_citations,
                 bibtex: paper.bibtex,
                 doi: paper.doi
             });
@@ -271,22 +272,33 @@ document.addEventListener('DOMContentLoaded', () => {
         URL.revokeObjectURL(a.href);
     };
 
+    const getSelectedStyle = () => {
+        const val = document.getElementById('export-style-input')?.value || 'Standard';
+        if (val === 'Standard (Numbered)') return 'Standard';
+        return val;
+    };
+
     const renderCollection = () => {
         if (collectedCitations.length === 0) {
             collectionList.innerHTML = '<div class="empty-state"><p>Your reference list is empty. Collect papers from search results to build your list.</p></div>';
             return;
         }
 
+        const selectedStyle = getSelectedStyle();
+
         collectionList.innerHTML = '';
         collectedCitations.forEach((ref, idx) => {
             const card = document.createElement('div');
             card.className = 'paper-card';
+            const displayCitation = ref.citations[selectedStyle] || ref.citations['Standard'] || ref.title;
             card.innerHTML = `
                 <div class="paper-actions-top">
-                    <div class="source-badge">Reference [${idx + 1}]</div>
+                    <div class="source-badge">Ref [${idx + 1}]</div>
                     <button class="btn-collect collected" id="remove-${idx}">Remove</button>
                 </div>
-                <div class="paper-title" style="font-size: 13px; font-weight: 500;">${ref.standard}</div>
+                <div class="paper-title" style="font-size: 13px; font-weight: 500;">
+                    ${selectedStyle === 'Standard' ? `[${idx + 1}] ` : ''}${displayCitation}
+                </div>
             `;
             card.querySelector('button').addEventListener('click', () => {
                 collectedCitations.splice(idx, 1);
@@ -296,6 +308,9 @@ document.addEventListener('DOMContentLoaded', () => {
             collectionList.appendChild(card);
         });
     };
+
+    // Listen for style changes to refresh the preview
+    document.getElementById('export-style-input')?.addEventListener('input', renderCollection);
 
     clearBtn.addEventListener('click', () => {
         if (confirm('Clear all collected references?')) {
@@ -307,8 +322,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
     exportBtn.addEventListener('click', () => {
         if (collectedCitations.length === 0) return;
-        const fullContent = collectedCitations.map((c, i) => `[${i + 1}] ${c.standard}`).join('\n\n');
-        downloadFile(fullContent, 'my_references.txt', 'text/plain');
+        const selectedStyle = getSelectedStyle();
+
+        const fullContent = collectedCitations.map((c, i) => {
+            const content = c.citations[selectedStyle] || c.citations['Standard'] || 'No citation available';
+            return selectedStyle === 'Standard' ? `[${i + 1}] ${content}` : content;
+        }).join('\n\n');
+
+        downloadFile(fullContent, `references_${selectedStyle.toLowerCase()}.txt`, 'text/plain');
     });
 
     searchBtn.addEventListener('click', performSearch);
