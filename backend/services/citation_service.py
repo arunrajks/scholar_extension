@@ -178,32 +178,95 @@ def generate_standard_list(paper: ScholarlyPaper) -> str:
     
     return f"{authors}. {title}. {journal}{volume}{year}."
 
-def generate_acm(paper: ScholarlyPaper) -> str:
-    """Generates ACM style: [1] Authors. Year. Title. Journal. Vol, No (Year), Pages."""
-    author_str = ", ".join([a.name for a in paper.authors[:3]]) + (" et al." if len(paper.authors) > 3 else "")
-    journal = paper.journal if paper.journal else "Unknown Journal"
-    vol_no = f"{paper.volume}, {paper.issue}" if paper.volume and paper.issue else (paper.volume or paper.issue or "")
-    pages = f", {paper.pages}" if paper.pages else ""
-    return f"[{paper.source_api}] {author_str}. {paper.year}. {paper.title}. {journal}. {vol_no}{pages}."
-
-def generate_bluebook(paper: ScholarlyPaper) -> str:
-    """Generates Bluebook style (Law): Author, Title, Vol Journal Page (Year)."""
-    author_str = paper.authors[0].name.upper() if paper.authors else "UNKNOWN"
-    journal = paper.journal if paper.journal else "Journal"
-    vol = paper.volume if paper.volume else ""
-    pages = paper.pages.split('-')[0] if paper.pages else ""
-    return f"{author_str}, {paper.title}, {vol} {journal} {pages} ({paper.year})."
-
-def generate_asa(paper: ScholarlyPaper) -> str:
-    """Generates ASA style (Sociology): Author. Year. \"Title.\" Journal Vol(issue):pages."""
-    author_str = paper.authors[0].name if paper.authors else "Unknown"
-    if len(paper.authors) > 1:
-        author_str = f"{paper.authors[0].name.split()[-1]}, {paper.authors[0].name.split()[0]} and {paper.authors[1].name}"
+def generate_pnas(paper: ScholarlyPaper) -> str:
+    """PNAS style: Author Initial Surname, et al. (Year) Title. Proc Natl Acad Sci USA Vol(Issue):Pages."""
+    authors = []
+    for a in paper.authors:
+        names = a.name.split()
+        if len(names) > 1:
+            authors.append(f"{names[-1]} {names[0][0]}")
+        else:
+            authors.append(a.name)
     
-    journal = paper.journal if paper.journal else "Unknown Journal"
-    issue = f"({paper.issue})" if paper.issue else ""
+    author_str = ", ".join(authors[:5]) + (" et al." if len(authors) > 5 else "")
+    journal = paper.journal if paper.journal else "Proc Natl Acad Sci USA"
+    vol_issue = f"{paper.volume}" + (f"({paper.issue})" if paper.issue else "")
     pages = f":{paper.pages}" if paper.pages else ""
-    return f"{author_str}. {paper.year}. \"{paper.title}.\" {journal} {paper.volume}{issue}{pages}."
+    return f"{author_str} ({paper.year}) {paper.title}. {journal} {vol_issue}{pages}."
+
+def generate_cell(paper: ScholarlyPaper) -> str:
+    """Cell style: Author, A.B., Author, C.D., etc. (Year). Title. Cell Vol, Pages."""
+    authors = []
+    for a in paper.authors:
+        names = a.name.split()
+        if len(names) > 1:
+            initials = "".join([n[0] + "." for n in names[:-1]])
+            authors.append(f"{names[-1]}, {initials}")
+        else:
+            authors.append(a.name)
+    
+    author_str = ", ".join(authors[:10]) + (", et al." if len(authors) > 10 else "")
+    journal = paper.journal if paper.journal else "Cell"
+    vol = f" {paper.volume}" if paper.volume else ""
+    pages = f", {paper.pages}" if paper.pages else ""
+    return f"{author_str} ({paper.year}). {paper.title}. {journal}{vol}{pages}."
+
+def generate_jama_ama(paper: ScholarlyPaper) -> str:
+    """JAMA/AMA style: Author Initials Surname. Title. Journal. Year;Vol(Issue):Pages."""
+    authors = []
+    for a in paper.authors:
+        names = a.name.split()
+        if len(names) > 1:
+            initials = "".join([n[0] for n in names[:-1]])
+            authors.append(f"{names[-1]} {initials}")
+        else:
+            authors.append(a.name)
+    
+    author_str = ", ".join(authors[:6]) + (", et al." if len(authors) > 6 else "")
+    journal = paper.journal if paper.journal else "Journal"
+    vol_issue = f"{paper.volume}" + (f"({paper.issue})" if paper.issue else "")
+    pages = f":{paper.pages}" if paper.pages else ""
+    return f"{author_str}. {paper.title}. {journal}. {paper.year};{vol_issue}{pages}."
+
+def generate_acs(paper: ScholarlyPaper) -> str:
+    """ACS style: Author, A. B.; Author, C. D. Journal Year, Vol, Pages."""
+    authors = []
+    for a in paper.authors:
+        names = a.name.split()
+        if len(names) > 1:
+            initials = ". ".join([n[0] for n in names[:-1]]) + "."
+            authors.append(f"{names[-1]}, {initials}")
+        else:
+            authors.append(a.name)
+    
+    author_str = "; ".join(authors[:10]) + ("; et al." if len(authors) > 10 else "")
+    journal = paper.journal if paper.journal else "Journal"
+    vol = f", {paper.volume}" if paper.volume else ""
+    pages = f", {paper.pages}" if paper.pages else ""
+    return f"{author_str} {journal} {paper.year}{vol}{pages}."
+
+def generate_aps(paper: ScholarlyPaper) -> str:
+    """APS style: A. B. Author and C. D. Author, Journal Vol, Pages (Year)."""
+    authors = []
+    for a in paper.authors:
+        names = a.name.split()
+        if len(names) > 1:
+            initials = ". ".join([n[0] for n in names[:-1]]) + "."
+            authors.append(f"{initials} {names[-1]}")
+        else:
+            authors.append(a.name)
+    
+    if len(authors) > 4:
+        author_str = f"{authors[0]} et al."
+    elif len(authors) > 1:
+        author_str = ", ".join(authors[:-1]) + " and " + authors[-1]
+    else:
+        author_str = authors[0] if authors else "Unknown"
+
+    journal = paper.journal if paper.journal else "Journal"
+    vol = f" {paper.volume}" if paper.volume else ""
+    pages = f", {paper.pages}" if paper.pages else ""
+    return f"{author_str}, {journal}{vol}{pages} ({paper.year})."
 
 def format_all_citations(paper: ScholarlyPaper):
     """Fills the formatted_citations dictionary."""
@@ -217,13 +280,21 @@ def format_all_citations(paper: ScholarlyPaper):
         "Vancouver": generate_vancouver(paper),
         "Chicago": generate_chicago(paper),
         "MLA": generate_mla(paper),
-        "Cell": generate_nature(paper),
+        "Cell": generate_cell(paper),
         "Lancet": generate_vancouver(paper),
         "ACM": generate_acm(paper),
         "Bluebook": generate_bluebook(paper),
         "ASA": generate_asa(paper),
-        "APSA": generate_asa(paper), # APSA is very similar to ASA
-        "AAA": generate_asa(paper),  # AAA is also very similar
-        "ASCE": generate_ieee(paper), # Engineering styles often follow IEEE-like numbered formats
-        "ASME": generate_ieee(paper)
+        "APSA": generate_asa(paper),
+        "AAA": generate_asa(paper),
+        "ASCE": generate_ieee(paper),
+        "ASME": generate_ieee(paper),
+        "PNAS": generate_pnas(paper),
+        "NEJM": generate_jama_ama(paper),
+        "JAMA": generate_jama_ama(paper),
+        "ACS": generate_acs(paper),
+        "APS": generate_aps(paper),
+        "IOP": generate_aps(paper),
+        "Springer": generate_standard_list(paper),
+        "Elsevier": generate_standard_list(paper)
     }
