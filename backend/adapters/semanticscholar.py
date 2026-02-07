@@ -1,5 +1,5 @@
 from adapters.base import BaseAdapter
-from models import ScholarlyPaper, Author, PaperSource
+from models import ScholarlyPaper, Author, PaperSource, Researcher
 from typing import List
 
 class SemanticScholarAdapter(BaseAdapter):
@@ -73,7 +73,6 @@ class SemanticScholarAdapter(BaseAdapter):
             data = await self.fetch_json(url, params=params)
             items = data.get("data", [])
             
-            from models import Researcher
             results = []
             for item in items:
                 affiliations = item.get("affiliations", [])

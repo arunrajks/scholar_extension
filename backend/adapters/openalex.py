@@ -1,5 +1,5 @@
 from adapters.base import BaseAdapter
-from models import ScholarlyPaper, Author, PaperSource
+from models import ScholarlyPaper, Author, PaperSource, Researcher
 from typing import List
 
 class OpenAlexAdapter(BaseAdapter):
@@ -80,7 +80,6 @@ class OpenAlexAdapter(BaseAdapter):
             data = await self.fetch_json(url, params=params)
             items = data.get("results", [])
             
-            from models import Researcher
             results = []
             for item in items:
                 results.append(Researcher(
