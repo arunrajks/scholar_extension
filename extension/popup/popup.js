@@ -181,22 +181,12 @@ document.addEventListener('DOMContentLoaded', () => {
                     <button class="btn-export bibtex-btn" data-content="${encodeURIComponent(paper.bibtex || '')}" data-name="citation.bib">BibTeX</button>
                     <button class="btn-export ris-btn" data-content="${encodeURIComponent(paper.ris || '')}" data-name="citation.ris">RIS</button>
                 </div>
-
-                ${Object.keys(citations).length > 0 ? `
-                <div class="citation-options">
-                    <div class="citation-header">Citation style:</div>
-                    <div class="style-selector-row">
-                        <input list="citation-styles" class="inline-style-input" placeholder="Search journal style..." value="Standard (Numbered)">
-                        <button class="btn-download-style download-citation-btn" data-index="${index}">Download</button>
-                    </div>
-                </div>
-                ` : ''}
             `;
             card.querySelector('.btn-collect').addEventListener('click', () => toggleCollect(paper));
             resultsList.appendChild(card);
         });
 
-        attachActionListeners(results);
+        attachActionListeners();
     };
 
     const renderResearcherResults = (results, save = true) => {
@@ -240,32 +230,12 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     };
 
-    const attachActionListeners = (results) => {
+    const attachActionListeners = () => {
         document.querySelectorAll('.bibtex-btn, .ris-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 const content = decodeURIComponent(e.target.dataset.content);
                 const name = e.target.dataset.name;
                 downloadFile(content, name, 'text/plain');
-            });
-        });
-
-        document.querySelectorAll('.download-citation-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                const idx = e.target.dataset.index;
-                const paper = results[idx];
-                const input = e.target.parentElement.querySelector('.inline-style-input');
-                let styleVal = input.value || 'Standard';
-                if (styleVal === 'Standard (Numbered)') styleVal = 'Standard';
-
-                const citations = paper.formatted_citations || {};
-                let content = citations[styleVal] || citations['Standard'] || paper.title;
-
-                // Prepend index for standard as usual
-                if (styleVal === 'Standard') {
-                    content = `[${parseInt(idx) + 1}] ${content}`;
-                }
-
-                downloadFile(content, `${styleVal}.txt`, 'text/plain');
             });
         });
     };
