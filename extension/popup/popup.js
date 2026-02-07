@@ -39,17 +39,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
         try {
             const response = await fetch(`${API_BASE_URL}${endpoint}?q=${encodeURIComponent(query)}`);
-            if (!response.ok) throw new Error('Failed to fetch results');
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(errorData.detail || `Server error (${response.status})`);
+            }
 
             const data = await response.json();
             if (currentMode === 'papers') {
-                renderPaperResults(data.results);
+                renderPaperResults(data.results || []);
             } else {
-                renderResearcherResults(data.results);
+                renderResearcherResults(data.results || []);
             }
         } catch (error) {
-            console.error(error);
-            showStatus('Error: Backend server may be offline.', 'error');
+            console.error('Search error:', error);
+            showStatus(`${error.message || 'Error connecting to server.'}`, 'error');
         } finally {
             loading.classList.add('hidden');
         }
@@ -65,15 +68,19 @@ document.addEventListener('DOMContentLoaded', () => {
             const card = document.createElement('div');
             card.className = 'paper-card';
 
-            const authorsStr = paper.authors.map(a => a.name).slice(0, 3).join(', ') +
-                (paper.authors.length > 3 ? ' et al.' : '');
+            const authors = paper.authors || [];
+            const authorsStr = authors.map(a => a.name).slice(0, 3).join(', ') +
+                (authors.length > 3 ? ' et al.' : '');
 
-            const pdfSource = paper.sources.find(s => s.label === 'Open Access PDF');
-            const bestSource = paper.sources.find(s => s.access_type === 'oa') || paper.sources[0];
+            const sources = paper.sources || [];
+            const pdfSource = sources.find(s => s.label === 'Open Access PDF');
+            const bestSource = sources.find(s => s.access_type === 'oa') || sources[0];
+
+            const citations = paper.formatted_citations || {};
 
             card.innerHTML = `
-                <div class="source-badge">${paper.source_api}</div>
-                <div class="paper-title">${paper.title}</div>
+                <div class="source-badge">${paper.source_api || 'API'}</div>
+                <div class="paper-title">${paper.title || 'Untitled'}</div>
                 <div class="paper-meta">
                     <div class="meta-item">📅 ${paper.year || 'N/A'}</div>
                     <div class="meta-item">👤 ${authorsStr || 'Unknown'}</div>
@@ -86,18 +93,20 @@ document.addEventListener('DOMContentLoaded', () => {
                 </div>
 
                 <div class="export-group">
-                    <button class="btn-export bibtex-btn" data-content="${encodeURIComponent(paper.bibtex)}" data-name="citation.bib">BibTeX</button>
-                    <button class="btn-export ris-btn" data-content="${encodeURIComponent(paper.ris)}" data-name="citation.ris">RIS</button>
+                    <button class="btn-export bibtex-btn" data-content="${encodeURIComponent(paper.bibtex || '')}" data-name="citation.bib">BibTeX</button>
+                    <button class="btn-export ris-btn" data-content="${encodeURIComponent(paper.ris || '')}" data-name="citation.ris">RIS</button>
                 </div>
 
+                ${Object.keys(citations).length > 0 ? `
                 <div class="citation-options">
                     <div class="citation-header">Journal Styles:</div>
                     <div class="style-list">
-                        ${Object.entries(paper.formatted_citations).map(([style, content]) => `
+                        ${Object.entries(citations).map(([style, content]) => `
                             <button class="btn-style" data-content="${encodeURIComponent(content)}" data-name="${style}.txt">${style}</button>
                         `).join('')}
                     </div>
                 </div>
+                ` : ''}
             `;
             resultsList.appendChild(card);
         });
@@ -112,12 +121,13 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         results.forEach(res => {
+            if (!res) return;
             const card = document.createElement('div');
             card.className = 'paper-card researcher-card';
 
             card.innerHTML = `
-                <div class="source-badge">${res.source}</div>
-                <div class="paper-title">${res.name}</div>
+                <div class="source-badge">${res.source || 'API'}</div>
+                <div class="paper-title">${res.name || 'Unknown Researcher'}</div>
                 ${res.affiliation ? `<div class="affiliation">${res.affiliation}</div>` : ''}
                 
                 <div class="stats-grid">
@@ -126,17 +136,17 @@ document.addEventListener('DOMContentLoaded', () => {
                         <span class="stat-label">H-Index</span>
                     </div>
                     <div class="stat-item">
-                        <span class="stat-value">${res.citation_count?.toLocaleString() || 0}</span>
+                        <span class="stat-value">${(res.citation_count || 0).toLocaleString()}</span>
                         <span class="stat-label">Citations</span>
                     </div>
                     <div class="stat-item">
-                        <span class="stat-value">${res.paper_count?.toLocaleString() || 0}</span>
+                        <span class="stat-value">${(res.paper_count || 0).toLocaleString()}</span>
                         <span class="stat-label">Papers</span>
                     </div>
                 </div>
                 
                 <div class="paper-actions" style="grid-template-columns: 1fr;">
-                    <a href="${res.url}" target="_blank" class="btn-action btn-paper">View Profile</a>
+                    <a href="${res.url || '#'}" target="_blank" class="btn-action btn-paper">View Profile</a>
                 </div>
             `;
             resultsList.appendChild(card);
