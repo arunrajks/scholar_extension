@@ -271,6 +271,46 @@ document.addEventListener('DOMContentLoaded', () => {
         URL.revokeObjectURL(a.href);
     };
 
+    const renderCollection = () => {
+        if (collectedCitations.length === 0) {
+            collectionList.innerHTML = '<div class="empty-state"><p>Your reference list is empty. Collect papers from search results to build your list.</p></div>';
+            return;
+        }
+
+        collectionList.innerHTML = '';
+        collectedCitations.forEach((ref, idx) => {
+            const card = document.createElement('div');
+            card.className = 'paper-card';
+            card.innerHTML = `
+                <div class="paper-actions-top">
+                    <div class="source-badge">Reference [${idx + 1}]</div>
+                    <button class="btn-collect collected" id="remove-${idx}">Remove</button>
+                </div>
+                <div class="paper-title" style="font-size: 13px; font-weight: 500;">${ref.standard}</div>
+            `;
+            card.querySelector('button').addEventListener('click', () => {
+                collectedCitations.splice(idx, 1);
+                updateCollectCount();
+                renderCollection();
+            });
+            collectionList.appendChild(card);
+        });
+    };
+
+    clearBtn.addEventListener('click', () => {
+        if (confirm('Clear all collected references?')) {
+            collectedCitations = [];
+            updateCollectCount();
+            renderCollection();
+        }
+    });
+
+    exportBtn.addEventListener('click', () => {
+        if (collectedCitations.length === 0) return;
+        const fullContent = collectedCitations.map((c, i) => `[${i + 1}] ${c.standard}`).join('\n\n');
+        downloadFile(fullContent, 'my_references.txt', 'text/plain');
+    });
+
     searchBtn.addEventListener('click', performSearch);
     searchInput.addEventListener('keypress', (e) => {
         if (e.key === 'Enter') performSearch();
