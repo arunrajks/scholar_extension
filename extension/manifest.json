@@ -2,7 +2,7 @@
     "manifest_version": 3,
     "name": "Scholarly: Unified Research Search",
     "short_name": "Scholarly",
-    "version": "1.3.2",
+    "version": "1.3.3",
     "description": "A unified search engine that finds scholarly publications and provides direct open-access PDF links across multiple repositories.",
     "author": "Scholarly Team",
     "action": {

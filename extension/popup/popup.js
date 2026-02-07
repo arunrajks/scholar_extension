@@ -260,9 +260,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const getSelectedStyle = () => {
-        const val = document.getElementById('export-style-input')?.value || 'Standard';
-        if (val === 'Standard (Numbered)') return 'Standard';
-        return val;
+        return document.getElementById('export-style-select')?.value || 'Standard';
     };
 
     const renderCollection = () => {
@@ -305,7 +303,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     // Listen for style changes to refresh the preview
-    document.getElementById('export-style-input')?.addEventListener('input', renderCollection);
+    document.getElementById('export-style-select')?.addEventListener('change', renderCollection);
 
     clearBtn.addEventListener('click', () => {
         if (confirm('Clear all collected references?')) {

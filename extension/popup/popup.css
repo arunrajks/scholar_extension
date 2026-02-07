@@ -538,7 +538,7 @@ header p {
     margin-top: 4px;
 }
 
-#export-style-input {
+#export-style-select {
     font-family: inherit;
     font-size: 11px;
     padding: 6px 10px;
@@ -548,13 +548,14 @@ header p {
     color: var(--text-main);
     outline: none;
     cursor: pointer;
-    width: 140px;
+    width: 160px;
     margin-top: 0;
     transition: all 0.2s;
     appearance: none;
+    padding-right: 30px;
 }
 
-#export-style-input:focus {
+#export-style-select:focus {
     border-color: var(--primary);
     background-color: white;
     box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.1);

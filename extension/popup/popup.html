@@ -59,29 +59,27 @@
                     <h3>My Collected List</h3>
                     <div class="collection-style-hint">Search journal style:</div>
                     <div class="search-style-container">
-                        <input list="citation-styles" id="export-style-input" placeholder="Search journal style..."
-                            value="Standard (Numbered)">
-                        <datalist id="citation-styles">
-                            <option value="Standard (Numbered)">
-                            <option value="APA">
-                            <option value="Nature">
-                            <option value="Science">
-                            <option value="IEEE">
-                            <option value="Harvard">
-                            <option value="Vancouver">
-                            <option value="Chicago">
-                            <option value="MLA">
-                            <option value="Cell">
-                            <option value="Lancet">
-                            <option value="PNAS">
-                            <option value="NEJM">
-                            <option value="JAMA">
-                            <option value="ACS">
-                            <option value="APS">
-                            <option value="IOP">
-                            <option value="Springer">
-                            <option value="Elsevier">
-                        </datalist>
+                        <select id="export-style-select">
+                            <option value="Standard">Standard (Numbered)</option>
+                            <option value="APA">APA Style</option>
+                            <option value="Nature">Nature</option>
+                            <option value="Science">Science</option>
+                            <option value="IEEE">IEEE</option>
+                            <option value="Harvard">Harvard</option>
+                            <option value="Vancouver">Vancouver</option>
+                            <option value="Chicago">Chicago</option>
+                            <option value="MLA">MLA</option>
+                            <option value="Cell">Cell</option>
+                            <option value="Lancet">Lancet</option>
+                            <option value="PNAS">PNAS</option>
+                            <option value="NEJM">New England Journal of Medicine</option>
+                            <option value="JAMA">JAMA</option>
+                            <option value="ACS">ACS</option>
+                            <option value="APS">APS</option>
+                            <option value="IOP">IOP</option>
+                            <option value="Springer">Springer</option>
+                            <option value="Elsevier">Elsevier</option>
+                        </select>
                     </div>
                 </div>
                 <div class="collection-actions">
@@ -92,17 +90,6 @@
             <div id="collection-list"></div>
         </div>
     </div>
-    <datalist id="citation-styles">
-        <option value="Standard (Numbered)">
-        <option value="APA">
-        <option value="Nature">
-        <option value="Science">
-        <option value="IEEE">
-        <option value="Harvard">
-        <option value="Vancouver">
-        <option value="Chicago">
-        <option value="MLA">
-    </datalist>
     <script src="popup.js"></script>
 </body>
 
