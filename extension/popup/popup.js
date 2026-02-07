@@ -184,13 +184,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 ${Object.keys(citations).length > 0 ? `
                 <div class="citation-options">
-                    <div class="citation-header">Journal Styles:</div>
-                    <div class="style-list">
-                        ${Object.entries(citations).map(([style, content]) => {
-                // Prepend index for Standard style as requested by user
-                const finalContent = style === 'Standard' ? `[${index + 1}] ${content}` : content;
-                return `<button class="btn-style" data-content="${encodeURIComponent(finalContent)}" data-name="${style}.txt">${style}</button>`;
-            }).join('')}
+                    <div class="citation-header">Citation style:</div>
+                    <div class="style-selector-row">
+                        <input list="citation-styles" class="inline-style-input" placeholder="Search journal style..." value="Standard (Numbered)">
+                        <button class="btn-download-style download-citation-btn" data-index="${index}">Download</button>
                     </div>
                 </div>
                 ` : ''}
@@ -199,7 +196,7 @@ document.addEventListener('DOMContentLoaded', () => {
             resultsList.appendChild(card);
         });
 
-        attachActionListeners();
+        attachActionListeners(results);
     };
 
     const renderResearcherResults = (results, save = true) => {
@@ -243,12 +240,32 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     };
 
-    const attachActionListeners = () => {
-        document.querySelectorAll('.bibtex-btn, .ris-btn, .btn-style').forEach(btn => {
+    const attachActionListeners = (results) => {
+        document.querySelectorAll('.bibtex-btn, .ris-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 const content = decodeURIComponent(e.target.dataset.content);
                 const name = e.target.dataset.name;
                 downloadFile(content, name, 'text/plain');
+            });
+        });
+
+        document.querySelectorAll('.download-citation-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const idx = e.target.dataset.index;
+                const paper = results[idx];
+                const input = e.target.parentElement.querySelector('.inline-style-input');
+                let styleVal = input.value || 'Standard';
+                if (styleVal === 'Standard (Numbered)') styleVal = 'Standard';
+
+                const citations = paper.formatted_citations || {};
+                let content = citations[styleVal] || citations['Standard'] || paper.title;
+
+                // Prepend index for standard as usual
+                if (styleVal === 'Standard') {
+                    content = `[${parseInt(idx) + 1}] ${content}`;
+                }
+
+                downloadFile(content, `${styleVal}.txt`, 'text/plain');
             });
         });
     };

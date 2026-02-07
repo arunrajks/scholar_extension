@@ -251,6 +251,62 @@ header p {
     margin-bottom: 12px;
 }
 
+.citation-options {
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid #f1f5f9;
+}
+
+.citation-header {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 6px;
+}
+
+.style-selector-row {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.inline-style-input {
+    flex: 1;
+    font-family: inherit;
+    font-size: 11px;
+    padding: 6px 10px;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    background: #f8fafc;
+    color: var(--text-main);
+    outline: none;
+    transition: all 0.2s;
+}
+
+.inline-style-input:focus {
+    border-color: var(--primary);
+    background: white;
+}
+
+.btn-download-style {
+    padding: 6px 12px;
+    background: #f1f5f9;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-main);
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.btn-download-style:hover {
+    border-color: var(--primary);
+    color: var(--primary);
+}
+
 .source-links-section {
     border-top: 1px solid #f1f5f9;
     padding-top: 12px;
