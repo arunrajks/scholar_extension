@@ -290,7 +290,15 @@ document.addEventListener('DOMContentLoaded', () => {
         collectedCitations.forEach((ref, idx) => {
             const card = document.createElement('div');
             card.className = 'paper-card';
-            const displayCitation = ref.citations[selectedStyle] || ref.citations['Standard'] || ref.title;
+
+            // Legacy support: if ref.citations is missing, use ref.standard or ref.title
+            let displayCitation = ref.title;
+            if (ref.citations) {
+                displayCitation = ref.citations[selectedStyle] || ref.citations['Standard'] || ref.title;
+            } else if (ref.standard) {
+                displayCitation = ref.standard;
+            }
+
             card.innerHTML = `
                 <div class="paper-actions-top">
                     <div class="source-badge">Ref [${idx + 1}]</div>
@@ -325,7 +333,12 @@ document.addEventListener('DOMContentLoaded', () => {
         const selectedStyle = getSelectedStyle();
 
         const fullContent = collectedCitations.map((c, i) => {
-            const content = c.citations[selectedStyle] || c.citations['Standard'] || 'No citation available';
+            let content = c.title;
+            if (c.citations) {
+                content = c.citations[selectedStyle] || c.citations['Standard'] || c.title;
+            } else if (c.standard) {
+                content = c.standard;
+            }
             return selectedStyle === 'Standard' ? `[${i + 1}] ${content}` : content;
         }).join('\n\n');
 
