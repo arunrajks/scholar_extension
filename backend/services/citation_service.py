@@ -227,6 +227,47 @@ def generate_jama_ama(paper: ScholarlyPaper) -> str:
     vol_issue = f"{paper.volume}" + (f"({paper.issue})" if paper.issue else "")
     pages = f":{paper.pages}" if paper.pages else ""
     return f"{author_str}. {paper.title}. {journal}. {paper.year};{vol_issue}{pages}."
+def generate_acm(paper: ScholarlyPaper) -> str:
+    """ACM style: [1] Authors. Year. Title. Journal. Vol, No (Year), Pages."""
+    authors = []
+    for a in paper.authors:
+        names = a.name.split()
+        if len(names) > 1:
+            authors.append(f"{names[0][0]}. {names[-1]}")
+        else:
+            authors.append(a.name)
+    
+    author_str = ", ".join(authors[:3]) + (" et al." if len(authors) > 3 else "")
+    journal = paper.journal if paper.journal else "Unknown Journal"
+    vol_no = f"{paper.volume}, {paper.issue}" if paper.volume and paper.issue else (paper.volume or paper.issue or "")
+    pages = f", {paper.pages}" if paper.pages else ""
+    return f"[{paper.source_api}] {author_str}. {paper.year}. {paper.title}. {journal}. {vol_no}{pages}."
+
+def generate_bluebook(paper: ScholarlyPaper) -> str:
+    """Bluebook style (Law): Author, Title, Vol Journal Page (Year)."""
+    author_str = paper.authors[0].name.upper() if paper.authors else "UNKNOWN"
+    journal = paper.journal if paper.journal else "Journal"
+    vol = paper.volume if paper.volume else ""
+    pages = paper.pages.split('-')[0] if paper.pages else ""
+    return f"{author_str}, {paper.title}, {vol} {journal} {pages} ({paper.year})."
+
+def generate_asa(paper: ScholarlyPaper) -> str:
+    """ASA style (Sociology): Author. Year. \"Title.\" Journal Vol(issue):pages."""
+    if not paper.authors:
+        author_str = "Unknown"
+    elif len(paper.authors) > 1:
+        # Last, First and First Last
+        names0 = paper.authors[0].name.split()
+        first0 = names0[0] if names0 else ""
+        last0 = names0[-1] if len(names0) > 1 else first0
+        author_str = f"{last0}, {first0} and {paper.authors[1].name}"
+    else:
+        author_str = paper.authors[0].name
+    
+    journal = paper.journal if paper.journal else "Unknown Journal"
+    issue = f"({paper.issue})" if paper.issue else ""
+    pages = f":{paper.pages}" if paper.pages else ""
+    return f"{author_str}. {paper.year}. \"{paper.title}.\" {journal} {paper.volume}{issue}{pages}."
 
 def generate_acs(paper: ScholarlyPaper) -> str:
     """ACS style: Author, A. B.; Author, C. D. Journal Year, Vol, Pages."""
