@@ -74,6 +74,91 @@ def generate_science(paper: ScholarlyPaper) -> str:
     
     return f"{authors}, {paper.title}.{journal}{year}."
 
+def generate_ieee(paper: ScholarlyPaper) -> str:
+    """Generates IEEE style citation: [1] I. Initials Surname, "Title," Journal, vol. V, no. N, pp. P, Year."""
+    authors = []
+    for a in paper.authors:
+        names = a.name.split()
+        if len(names) > 1:
+            initials = "".join([n[0] + "." for n in names[:-1]])
+            authors.append(f"{initials} {names[-1]}")
+        else:
+            authors.append(a.name)
+    
+    author_str = ", ".join(authors[:6]) + (", et al." if len(authors) > 6 else "")
+    journal = paper.journal if paper.journal else "Unknown Journal"
+    vol = f", vol. {paper.volume}" if paper.volume else ""
+    no = f", no. {paper.issue}" if paper.issue else ""
+    pp = f", pp. {paper.pages}" if paper.pages else ""
+    year = f", {paper.year}" if paper.year else ""
+    
+    return f"{author_str}, \"{paper.title},\" {journal}{vol}{no}{pp}{year}."
+
+def generate_harvard(paper: ScholarlyPaper) -> str:
+    """Generates Harvard style citation: Surname, I. (Year) 'Title', Journal, Vol(No), pp. P."""
+    authors = []
+    for a in paper.authors:
+        names = a.name.split()
+        if len(names) > 1:
+            authors.append(f"{names[-1]}, {names[0][0]}.")
+        else:
+            authors.append(a.name)
+    
+    author_str = ", ".join(authors[:3]) + (" et al." if len(authors) > 3 else "")
+    year = f"({paper.year})" if paper.year else "(n.d.)"
+    journal = f"{paper.journal}" if paper.journal else "Unknown Journal"
+    vol_no = f"{paper.volume}" + (f"({paper.issue})" if paper.issue else "")
+    pp = f", pp. {paper.pages}" if paper.pages else ""
+    
+    return f"{author_str} {year} '{paper.title}', {journal}, {vol_no}{pp}."
+
+def generate_vancouver(paper: ScholarlyPaper) -> str:
+    """Generates Vancouver style citation: Author I. Title. Journal. Year;Vol(No):Page."""
+    authors = []
+    for a in paper.authors:
+        names = a.name.split()
+        if len(names) > 1:
+            authors.append(f"{names[-1]} {names[0][0]}")
+        else:
+            authors.append(a.name)
+    
+    author_str = ", ".join(authors[:6]) + (", et al." if len(authors) > 6 else "")
+    journal = paper.journal if paper.journal else "Unknown Journal"
+    vol_no = f"{paper.volume}" + (f"({paper.issue})" if paper.issue else "")
+    pages = f":{paper.pages}" if paper.pages else ""
+    
+    return f"{author_str}. {paper.title}. {journal}. {paper.year};{vol_no}{pages}."
+
+def generate_chicago(paper: ScholarlyPaper) -> str:
+    """Generates Chicago style citation: Author, I. "Title." Journal Vol, no. No (Year): Page."""
+    author_str = paper.authors[0].name if paper.authors else "Unknown"
+    if len(paper.authors) > 1:
+        author_str += " et al."
+        
+    journal = paper.journal if paper.journal else "Unknown Journal"
+    vol = f" {paper.volume}" if paper.volume else ""
+    no = f", no. {paper.issue}" if paper.issue else ""
+    year = f" ({paper.year})" if paper.year else ""
+    pages = f": {paper.pages}" if paper.pages else ""
+    
+    return f"{author_str}. \"{paper.title}.\" {journal}{vol}{no}{year}{pages}."
+
+def generate_mla(paper: ScholarlyPaper) -> str:
+    """Generates MLA style citation: Author, I. \"Title.\" Journal, vol. V, no. N, Year, pp. P."""
+    author_str = paper.authors[0].name if paper.authors else "Unknown"
+    if len(paper.authors) > 2:
+        author_str += ", et al."
+    elif len(paper.authors) == 2:
+        author_str += ", and " + paper.authors[1].name
+        
+    journal = paper.journal if paper.journal else "Unknown Journal"
+    vol = f", vol. {paper.volume}" if paper.volume else ""
+    no = f", no. {paper.issue}" if paper.issue else ""
+    year = f", {paper.year}" if paper.year else ""
+    pp = f", pp. {paper.pages}" if paper.pages else ""
+    
+    return f"{author_str}. \"{paper.title}.\" {journal}{vol}{no}{year}{pp}."
+
 def generate_standard_list(paper: ScholarlyPaper) -> str:
     """Generates a numbered/CV style citation: First and Second et al. Title. Journal, Vol, Year."""
     if not paper.authors:
@@ -96,8 +181,13 @@ def generate_standard_list(paper: ScholarlyPaper) -> str:
 def format_all_citations(paper: ScholarlyPaper):
     """Fills the formatted_citations dictionary."""
     paper.formatted_citations = {
+        "Standard": generate_standard_list(paper),
         "APA": generate_apa(paper),
         "Nature": generate_nature(paper),
         "Science": generate_science(paper),
-        "Standard": generate_standard_list(paper)
+        "IEEE": generate_ieee(paper),
+        "Harvard": generate_harvard(paper),
+        "Vancouver": generate_vancouver(paper),
+        "Chicago": generate_chicago(paper),
+        "MLA": generate_mla(paper)
     }
