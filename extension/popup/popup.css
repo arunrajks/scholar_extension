@@ -33,8 +33,14 @@ body {
 }
 
 header {
-    text-align: center;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
     margin-bottom: 20px;
+}
+
+.header-main {
+    text-align: left;
 }
 
 header h1 {
@@ -47,6 +53,25 @@ header h1 {
 header p {
     font-size: 13px;
     color: var(--text-muted);
+}
+
+#open-sidepanel {
+    background: white;
+    border: 1px solid #e2e8f0;
+    color: var(--text-muted);
+    padding: 8px;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#open-sidepanel:hover {
+    border-color: var(--primary);
+    color: var(--primary);
+    background: #f8fafc;
 }
 
 .search-tabs {

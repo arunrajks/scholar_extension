@@ -27,6 +27,22 @@ document.addEventListener('DOMContentLoaded', () => {
     tabPapers.addEventListener('click', () => setMode('papers'));
     tabResearchers.addEventListener('click', () => setMode('researchers'));
 
+    // Load saved state
+    chrome.storage?.local?.get(['lastSearch'], (result) => {
+        if (result.lastSearch) {
+            const { query, mode, results } = result.lastSearch;
+            searchInput.value = query || '';
+            setMode(mode || 'papers');
+            if (results) {
+                if (mode === 'papers') {
+                    renderPaperResults(results, false); // false to avoid double-saving
+                } else {
+                    renderResearcherResults(results, false);
+                }
+            }
+        }
+    });
+
     const performSearch = async () => {
         const query = searchInput.value.trim();
         if (!query) return;
@@ -45,11 +61,19 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             const data = await response.json();
+            const results = data.results || [];
+
             if (currentMode === 'papers') {
-                renderPaperResults(data.results || []);
+                renderPaperResults(results);
             } else {
-                renderResearcherResults(data.results || []);
+                renderResearcherResults(results);
             }
+
+            // Save state
+            chrome.storage?.local?.set({
+                lastSearch: { query, mode: currentMode, results }
+            });
+
         } catch (error) {
             console.error('Search error:', error);
             showStatus(`${error.message || 'Error connecting to server.'}`, 'error');
@@ -58,11 +82,13 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    const renderPaperResults = (results) => {
+    const renderPaperResults = (results, save = true) => {
         if (!results || results.length === 0) {
             showEmpty('No papers found.');
             return;
         }
+
+        resultsList.innerHTML = ''; // Clear for fresh render
 
         results.forEach(paper => {
             const card = document.createElement('div');
@@ -114,11 +140,13 @@ document.addEventListener('DOMContentLoaded', () => {
         attachActionListeners();
     };
 
-    const renderResearcherResults = (results) => {
+    const renderResearcherResults = (results, save = true) => {
         if (!results || results.length === 0) {
             showEmpty('No scholars found.');
             return;
         }
+
+        resultsList.innerHTML = ''; // Clear for fresh render
 
         results.forEach(res => {
             if (!res) return;
@@ -185,5 +213,14 @@ document.addEventListener('DOMContentLoaded', () => {
     searchBtn.addEventListener('click', performSearch);
     searchInput.addEventListener('keypress', (e) => {
         if (e.key === 'Enter') performSearch();
+    });
+
+    document.getElementById('open-sidepanel')?.addEventListener('click', async () => {
+        // Open side panel
+        const [tab] = await chrome.tabs.query({ active: true, lastFocusedWindow: true });
+        if (tab) {
+            chrome.sidePanel.open({ tabId: tab.id });
+            window.close(); // Close the popup
+        }
     });
 });
