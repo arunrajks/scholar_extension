@@ -114,9 +114,24 @@ async def search(q: str = Query(..., min_length=1)):
         paper.ris = generate_ris(paper)
         format_all_citations(paper)
     
+    # Calculate a local relevance boost based on the query
+    q_lower = q.lower()
+    for paper in deduplicated:
+        title_lower = paper.title.lower()
+        match_score = 0
+        if title_lower == q_lower:
+            match_score = 100 # Exact match
+        elif title_lower.startswith(q_lower):
+            match_score = 50 # Starts with query
+        elif q_lower in title_lower:
+            match_score = 25 # Contains query
+            
+        paper.relevance_score = (paper.relevance_score or 0) + match_score
+
     deduplicated.sort(key=lambda x: (
-        1 if x.doi else 0,
+        x.relevance_score or 0,
         x.citation_count or 0,
+        1 if x.doi else 0,
         x.year or 0
     ), reverse=True)
     
