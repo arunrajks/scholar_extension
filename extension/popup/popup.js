@@ -10,25 +10,53 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentMode = 'papers';
     const API_BASE_URL = 'https://scholarly-search-api-70wp.onrender.com';
 
+    const tabCollection = document.getElementById('tab-collection');
+    const collectionView = document.getElementById('collection-view');
+    const collectionList = document.getElementById('collection-list');
+    const searchContainer = document.getElementById('search-container');
+    const collectCount = document.getElementById('collect-count');
+    const clearBtn = document.getElementById('clear-collection');
+    const exportBtn = document.getElementById('export-collection');
+
+    let collectedCitations = [];
+
     // Tab switching
     const setMode = (mode) => {
         currentMode = mode;
-        if (mode === 'papers') {
-            tabPapers.classList.add('active');
-            tabResearchers.classList.remove('active');
-            searchInput.placeholder = 'Search papers, DOIs, journals...';
+        tabPapers.classList.toggle('active', mode === 'papers');
+        tabResearchers.classList.toggle('active', mode === 'researchers');
+        tabCollection.classList.toggle('active', mode === 'collection');
+
+        if (mode === 'collection') {
+            resultsList.classList.add('hidden');
+            searchContainer.classList.add('hidden');
+            collectionView.classList.remove('hidden');
+            renderCollection();
         } else {
-            tabResearchers.classList.add('active');
-            tabPapers.classList.remove('active');
-            searchInput.placeholder = 'Search scholars, authors, h-index...';
+            collectionView.classList.add('hidden');
+            resultsList.classList.remove('hidden');
+            searchContainer.classList.remove('hidden');
+            searchInput.placeholder = mode === 'papers' ?
+                'Search papers, DOIs, journals...' :
+                'Search scholars, authors, h-index...';
         }
     };
 
     tabPapers.addEventListener('click', () => setMode('papers'));
     tabResearchers.addEventListener('click', () => setMode('researchers'));
+    tabCollection.addEventListener('click', () => setMode('collection'));
+
+    const updateCollectCount = () => {
+        collectCount.textContent = collectedCitations.length;
+        chrome.storage?.local?.set({ collectedCitations });
+    };
 
     // Load saved state
-    chrome.storage?.local?.get(['lastSearch'], (result) => {
+    chrome.storage?.local?.get(['lastSearch', 'collectedCitations'], (result) => {
+        if (result.collectedCitations) {
+            collectedCitations = result.collectedCitations;
+            updateCollectCount();
+        }
         if (result.lastSearch) {
             const { query, mode, results } = result.lastSearch;
             searchInput.value = query || '';
@@ -82,6 +110,30 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
+    const toggleCollect = (paper) => {
+        const index = collectedCitations.findIndex(c => (c.doi && c.doi === paper.doi) || (c.title === paper.title));
+        if (index > -1) {
+            collectedCitations.splice(index, 1);
+        } else {
+            collectedCitations.push({
+                title: paper.title,
+                standard: paper.formatted_citations.Standard,
+                bibtex: paper.bibtex,
+                doi: paper.doi
+            });
+        }
+        updateCollectCount();
+
+        // Re-render current view to update button states
+        if (currentMode === 'papers') {
+            chrome.storage.local.get(['lastSearch'], (res) => {
+                if (res.lastSearch?.results) renderPaperResults(res.lastSearch.results, false);
+            });
+        } else if (currentMode === 'collection') {
+            renderCollection();
+        }
+    };
+
     const renderPaperResults = (results, save = true) => {
         if (!results || results.length === 0) {
             showEmpty('No papers found.');
@@ -90,7 +142,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         resultsList.innerHTML = ''; // Clear for fresh render
 
-        results.forEach(paper => {
+        results.forEach((paper, index) => {
+            const isCollected = collectedCitations.some(c => (c.doi && c.doi === paper.doi) || (c.title === paper.title));
             const card = document.createElement('div');
             card.className = 'paper-card';
 
@@ -105,14 +158,19 @@ document.addEventListener('DOMContentLoaded', () => {
             const citations = paper.formatted_citations || {};
 
             card.innerHTML = `
-                <div class="source-badge">${paper.source_api || 'API'}</div>
+                <div class="paper-actions-top">
+                    <div class="source-badge">${paper.source_api || 'API'}</div>
+                    <button class="btn-collect ${isCollected ? 'collected' : ''}" data-index="${index}">
+                        ${isCollected ? '⭐ Collected' : '☆ Collect'}
+                    </button>
+                </div>
                 <div class="paper-title">${paper.title || 'Untitled'}</div>
                 <div class="paper-meta">
                     <div class="meta-item">📅 ${paper.year || 'N/A'}</div>
                     <div class="meta-item">👤 ${authorsStr || 'Unknown'}</div>
                     ${paper.citation_count ? `<div class="meta-item">📈 ${paper.citation_count} citations</div>` : ''}
                 </div>
-                
+
                 <div class="paper-actions">
                     <a href="${bestSource?.url || '#'}" target="_blank" class="btn-action btn-paper">Open Source</a>
                     ${pdfSource ? `<a href="${pdfSource.url}" target="_blank" class="btn-action btn-pdf">Open PDF</a>` : ''}
@@ -127,13 +185,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div class="citation-options">
                     <div class="citation-header">Journal Styles:</div>
                     <div class="style-list">
-                        ${Object.entries(citations).map(([style, content]) => `
-                            <button class="btn-style" data-content="${encodeURIComponent(content)}" data-name="${style}.txt">${style}</button>
-                        `).join('')}
+                        ${Object.entries(citations).map(([style, content]) => {
+                // Prepend index for Standard style as requested by user
+                const finalContent = style === 'Standard' ? `[${index + 1}] ${content}` : content;
+                return `<button class="btn-style" data-content="${encodeURIComponent(finalContent)}" data-name="${style}.txt">${style}</button>`;
+            }).join('')}
                     </div>
                 </div>
                 ` : ''}
             `;
+            card.querySelector('.btn-collect').addEventListener('click', () => toggleCollect(paper));
             resultsList.appendChild(card);
         });
 

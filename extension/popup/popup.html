@@ -25,30 +25,24 @@
         </header>
 
         <div class="search-tabs">
-            <button id="tab-papers" class="tab-btn active" data-mode="papers">Papers</button>
-            <button id="tab-researchers" class="tab-btn" data-mode="researchers">Researchers</button>
+            <button id="tab-papers" class="tab-btn active">Papers</button>
+            <button id="tab-researchers" class="tab-btn">Researchers</button>
+            <button id="tab-collection" class="tab-btn">⭐ My List (<span id="collect-count">0</span>)</button>
         </div>
 
-        <div class="search-box">
-            <input type="text" id="search-input" placeholder="Search papers, DOIs, authors..." autofocus>
-            <button id="search-btn">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                    stroke-linecap="round" stroke-linejoin="round">
-                    <circle cx="11" cy="11" r="8"></circle>
-                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-                </svg>
-            </button>
-        </div>
+        <div id="status-message" class="status-message hidden"></div>
 
-        <div id="status-message" class="hidden"></div>
+        <div id="search-container" class="search-box">
+            <input type="text" id="search-input" placeholder="Search papers, DOIs, journals..." autofocus>
+            <button id="search-btn">Search</button>
+        </div>
 
         <div id="loading" class="hidden">
             <div class="spinner"></div>
             <p>Searching scholarly repositories...</p>
         </div>
 
-        <div id="results-list">
-            <!-- Results will be injected here -->
+        <div id="results-list" class="results-list">
             <div class="empty-state">
                 <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"
                     stroke-linecap="round" stroke-linejoin="round">
@@ -57,6 +51,17 @@
                 </svg>
                 <p>Start your research journey by searching above.</p>
             </div>
+        </div>
+
+        <div id="collection-view" class="results-list hidden">
+            <div class="collection-header">
+                <h3>Collected References</h3>
+                <div class="collection-actions">
+                    <button id="clear-collection" class="btn-secondary">Clear</button>
+                    <button id="export-collection" class="btn-primary">Export All (.txt)</button>
+                </div>
+            </div>
+            <div id="collection-list"></div>
         </div>
     </div>
     <script src="popup.js"></script>
