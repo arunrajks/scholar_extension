@@ -74,10 +74,30 @@ def generate_science(paper: ScholarlyPaper) -> str:
     
     return f"{authors}, {paper.title}.{journal}{year}."
 
+def generate_standard_list(paper: ScholarlyPaper) -> str:
+    """Generates a numbered/CV style citation: First and Second et al. Title. Journal, Vol, Year."""
+    if not paper.authors:
+        authors = "Unknown"
+    elif len(paper.authors) == 1:
+        authors = paper.authors[0].name
+    elif len(paper.authors) == 2:
+        authors = f"{paper.authors[0].name} and {paper.authors[1].name}"
+    else:
+        # Rule based on user examples: First and Second et al.
+        authors = f"{paper.authors[0].name} and {paper.authors[1].name} et al."
+    
+    title = paper.title
+    journal = paper.journal if paper.journal else "Unknown Journal"
+    volume = f", {paper.volume}" if paper.volume else ""
+    year = f", {paper.year}" if paper.year else ""
+    
+    return f"{authors}. {title}. {journal}{volume}{year}."
+
 def format_all_citations(paper: ScholarlyPaper):
     """Fills the formatted_citations dictionary."""
     paper.formatted_citations = {
         "APA": generate_apa(paper),
         "Nature": generate_nature(paper),
-        "Science": generate_science(paper)
+        "Science": generate_science(paper),
+        "Standard": generate_standard_list(paper)
     }

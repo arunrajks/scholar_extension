@@ -58,6 +58,7 @@ class OpenAlexAdapter(BaseAdapter):
                     authors=authors,
                     year=item.get("publication_year"),
                     journal=item.get("primary_location", {}).get("source", {}).get("display_name", ""),
+                    volume=item.get("biblio", {}).get("volume"),
                     doi=item.get("doi", "").split("doi.org/")[-1] if item.get("doi") else None,
                     sources=sources,
                     source_api="OpenAlex",

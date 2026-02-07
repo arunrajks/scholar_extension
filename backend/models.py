@@ -14,6 +14,7 @@ class ScholarlyPaper(BaseModel):
     authors: List[Author]
     year: Optional[int] = None
     journal: Optional[str] = None
+    volume: Optional[str] = None
     doi: Optional[str] = None
     sources: List[PaperSource] = []
     source_api: str # The API that first discovered this record
