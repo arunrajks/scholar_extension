@@ -178,6 +178,33 @@ def generate_standard_list(paper: ScholarlyPaper) -> str:
     
     return f"{authors}. {title}. {journal}{volume}{year}."
 
+def generate_acm(paper: ScholarlyPaper) -> str:
+    """Generates ACM style: [1] Authors. Year. Title. Journal. Vol, No (Year), Pages."""
+    author_str = ", ".join([a.name for a in paper.authors[:3]]) + (" et al." if len(paper.authors) > 3 else "")
+    journal = paper.journal if paper.journal else "Unknown Journal"
+    vol_no = f"{paper.volume}, {paper.issue}" if paper.volume and paper.issue else (paper.volume or paper.issue or "")
+    pages = f", {paper.pages}" if paper.pages else ""
+    return f"[{paper.source_api}] {author_str}. {paper.year}. {paper.title}. {journal}. {vol_no}{pages}."
+
+def generate_bluebook(paper: ScholarlyPaper) -> str:
+    """Generates Bluebook style (Law): Author, Title, Vol Journal Page (Year)."""
+    author_str = paper.authors[0].name.upper() if paper.authors else "UNKNOWN"
+    journal = paper.journal if paper.journal else "Journal"
+    vol = paper.volume if paper.volume else ""
+    pages = paper.pages.split('-')[0] if paper.pages else ""
+    return f"{author_str}, {paper.title}, {vol} {journal} {pages} ({paper.year})."
+
+def generate_asa(paper: ScholarlyPaper) -> str:
+    """Generates ASA style (Sociology): Author. Year. \"Title.\" Journal Vol(issue):pages."""
+    author_str = paper.authors[0].name if paper.authors else "Unknown"
+    if len(paper.authors) > 1:
+        author_str = f"{paper.authors[0].name.split()[-1]}, {paper.authors[0].name.split()[0]} and {paper.authors[1].name}"
+    
+    journal = paper.journal if paper.journal else "Unknown Journal"
+    issue = f"({paper.issue})" if paper.issue else ""
+    pages = f":{paper.pages}" if paper.pages else ""
+    return f"{author_str}. {paper.year}. \"{paper.title}.\" {journal} {paper.volume}{issue}{pages}."
+
 def format_all_citations(paper: ScholarlyPaper):
     """Fills the formatted_citations dictionary."""
     paper.formatted_citations = {
@@ -190,6 +217,13 @@ def format_all_citations(paper: ScholarlyPaper):
         "Vancouver": generate_vancouver(paper),
         "Chicago": generate_chicago(paper),
         "MLA": generate_mla(paper),
-        "Cell": generate_nature(paper), # Nature style is a good default for Cell
-        "Lancet": generate_vancouver(paper) # Lancet uses Vancouver style
+        "Cell": generate_nature(paper),
+        "Lancet": generate_vancouver(paper),
+        "ACM": generate_acm(paper),
+        "Bluebook": generate_bluebook(paper),
+        "ASA": generate_asa(paper),
+        "APSA": generate_asa(paper), # APSA is very similar to ASA
+        "AAA": generate_asa(paper),  # AAA is also very similar
+        "ASCE": generate_ieee(paper), # Engineering styles often follow IEEE-like numbered formats
+        "ASME": generate_ieee(paper)
     }
