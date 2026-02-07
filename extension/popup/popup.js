@@ -88,11 +88,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 try {
                     const errorData = await response.json();
                     errorMessage = errorData.detail || errorMessage;
-                } catch (e) {
-                    // If JSON parsing fails, try to get plain text error
+                } catch (jsonErr) {
+                    // Try to get plain text error if JSON fails
                     try {
                         const errorText = await response.text();
-                        if (errorText && errorText.length < 100) errorMessage = errorText;
+                        if (errorText && errorText.length < 150) errorMessage = errorText;
                     } catch (textErr) { }
                 }
                 throw new Error(errorMessage);
@@ -119,6 +119,22 @@ document.addEventListener('DOMContentLoaded', () => {
             loading.classList.add('hidden');
         }
     };
+
+    const clearSearch = () => {
+        searchInput.value = '';
+        resultsList.innerHTML = `<div class="empty-state">
+                <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path>
+                    <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path>
+                </svg>
+                <p>Start your research journey by searching above.</p>
+            </div>`;
+        chrome.storage?.local?.remove('lastSearch');
+        statusMsg.classList.add('hidden');
+    };
+
+    document.getElementById('clear-search-btn')?.addEventListener('click', clearSearch);
 
     const toggleCollect = (paper) => {
         const index = collectedCitations.findIndex(c => (c.doi && c.doi === paper.doi) || (c.title === paper.title));

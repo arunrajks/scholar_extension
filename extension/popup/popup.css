@@ -470,27 +470,6 @@ header p {
     text-transform: uppercase;
 }
 
-.citation-options {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    margin-top: 12px;
-    border-top: 1px solid #f1f5f9;
-    padding-top: 12px;
-}
-
-.citation-header {
-    font-size: 11px;
-    font-weight: 700;
-    color: var(--text-muted);
-}
-
-.style-list {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 4px;
-}
-
 .btn-style {
     font-size: 10px;
     padding: 4px 8px;
@@ -608,4 +587,30 @@ header p {
     justify-content: space-between;
     align-items: flex-start;
     margin-bottom: 8px;
+}
+
+.search-actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.btn-clear-search {
+    background: #f1f3f4;
+    color: #5f6368;
+    border: none;
+    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    font-size: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-clear-search:hover {
+    background: #e8eaed;
+    color: #202124;
 }
