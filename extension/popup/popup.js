@@ -5,7 +5,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const loading = document.getElementById('loading');
     const statusMsg = document.getElementById('status-message');
 
-    const API_URL = 'http://localhost:8000/search';
+    const API_URL = 'https://scholarly-search-api-70wp.onrender.com/search';
 
     const performSearch = async () => {
         const query = searchInput.value.trim();
