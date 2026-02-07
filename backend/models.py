@@ -21,6 +21,22 @@ class ScholarlyPaper(BaseModel):
     relevance_score: Optional[float] = 0.0
     bibtex: Optional[str] = None
     ris: Optional[str] = None
+    formatted_citations: Dict[str, str] = {} # e.g. {"apa": "...", "nature": "..."}
+
+class Researcher(BaseModel):
+    name: str
+    id: Optional[str] = None
+    affiliation: Optional[str] = None
+    h_index: Optional[int] = 0
+    citation_count: Optional[int] = 0
+    paper_count: Optional[int] = 0
+    url: Optional[str] = None
+    source: str
+
+class AuthorSearchResponse(BaseModel):
+    results: List[Researcher]
+    total_found: int
+    query: str
 
 class SearchResponse(BaseModel):
     results: List[ScholarlyPaper]

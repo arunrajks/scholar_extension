@@ -39,3 +39,45 @@ def generate_ris(paper: ScholarlyPaper) -> str:
         ris += f"UR  - {paper.sources[0].url}\n"
     ris += "ER  - \n"
     return ris
+
+def generate_apa(paper: ScholarlyPaper) -> str:
+    """Generates APA style citation."""
+    authors = ", ".join([a.name for a in paper.authors])
+    if len(paper.authors) > 7:
+        authors = ", ".join([a.name for a in paper.authors[:6]]) + ", ... " + paper.authors[-1].name
+    
+    year = f"({paper.year})" if paper.year else "(n.d.)"
+    journal = f". {paper.journal}." if paper.journal else "."
+    doi = f" https://doi.org/{paper.doi}" if paper.doi else ""
+    
+    return f"{authors} {year}. {paper.title}{journal}{doi}"
+
+def generate_nature(paper: ScholarlyPaper) -> str:
+    """Generates Nature style citation."""
+    if not paper.authors:
+        authors = "Unknown."
+    elif len(paper.authors) > 5:
+        authors = f"{paper.authors[0].name} et al."
+    else:
+        authors = ", ".join([a.name for a in paper.authors])
+    
+    journal = f" {paper.journal}" if paper.journal else ""
+    year = f" ({paper.year})" if paper.year else ""
+    
+    return f"{authors} {paper.title}.{journal}{year}."
+
+def generate_science(paper: ScholarlyPaper) -> str:
+    """Generates Science style citation."""
+    authors = ", ".join([a.name for a in paper.authors])
+    journal = f" {paper.journal}" if paper.journal else ""
+    year = f" ({paper.year})" if paper.year else ""
+    
+    return f"{authors}, {paper.title}.{journal}{year}."
+
+def format_all_citations(paper: ScholarlyPaper):
+    """Fills the formatted_citations dictionary."""
+    paper.formatted_citations = {
+        "APA": generate_apa(paper),
+        "Nature": generate_nature(paper),
+        "Science": generate_science(paper)
+    }

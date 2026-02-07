@@ -68,3 +68,32 @@ class OpenAlexAdapter(BaseAdapter):
         except Exception as e:
             print(f"OpenAlex Error: {e}")
             return []
+
+    async def search_authors(self, query: str, limit: int = 10) -> List[Researcher]:
+        url = "https://api.openalex.org/authors"
+        params = {
+            "search": query,
+            "per_page": limit,
+        }
+        
+        try:
+            data = await self.fetch_json(url, params=params)
+            items = data.get("results", [])
+            
+            from models import Researcher
+            results = []
+            for item in items:
+                results.append(Researcher(
+                    name=item.get("display_name", "Unknown Researcher"),
+                    id=item.get("id"),
+                    affiliation=item.get("last_known_institution", {}).get("display_name"),
+                    h_index=item.get("summary_stats", {}).get("h_index", 0),
+                    citation_count=item.get("cited_by_count", 0),
+                    paper_count=item.get("works_count", 0),
+                    url=item.get("id"),
+                    source="OpenAlex"
+                ))
+            return results
+        except Exception as e:
+            print(f"OpenAlex Author Error: {e}")
+            return []

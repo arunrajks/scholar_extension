@@ -1,8 +1,8 @@
 from fastapi import FastAPI, Query
 from fastapi.middleware.cors import CORSMiddleware
 import asyncio
-from typing import List, Dict, Set
-from models import SearchResponse, ScholarlyPaper, PaperSource
+from typing import List, Dict, Set, Optional
+from models import SearchResponse, ScholarlyPaper, PaperSource, Author, Researcher, AuthorSearchResponse
 from adapters.crossref import CrossrefAdapter
 from adapters.openalex import OpenAlexAdapter
 from adapters.semanticscholar import SemanticScholarAdapter
@@ -77,11 +77,29 @@ def deduplicate_results(results: List[ScholarlyPaper]) -> List[ScholarlyPaper]:
             else:
                 by_fallback[fallback_key] = paper
     
-    # Merge both collections
-    all_unique = list(by_doi.values())
-    # Only add from fallback if not already in by_doi (some might have matched DOI later)
-    # But for simplicity, we just take all from both and dedup again or just return
     return list(by_doi.values()) + list(by_fallback.values())
+
+def deduplicate_authors(authors: List[Researcher]) -> List[Researcher]:
+    """Deduplicate authors based on name and affiliation."""
+    unique: Dict[str, Researcher] = {}
+    for author in authors:
+        # Simple key: name + normalized affiliation
+        aff_clean = "".join(filter(str.isalnum, (author.affiliation or "").lower()))
+        key = f"{author.name.lower()}|{aff_clean}"
+        
+        if key in unique:
+            existing = unique[key]
+            # Keep highest metrics
+            existing.h_index = max(existing.h_index or 0, author.h_index or 0)
+            existing.citation_count = max(existing.citation_count or 0, author.citation_count or 0)
+            existing.paper_count = max(existing.paper_count or 0, author.paper_count or 0)
+            # Prefer certain sources if needed, or join IDs
+        else:
+            unique[key] = author
+            
+    return list(unique.values())
+
+from services.citation_service import generate_bibtex, generate_ris, format_all_citations
 
 @app.get("/search", response_model=SearchResponse)
 async def search(q: str = Query(..., min_length=1)):
@@ -89,16 +107,13 @@ async def search(q: str = Query(..., min_length=1)):
     all_results = await asyncio.gather(*tasks)
     flattened_results = [paper for sublist in all_results for paper in sublist]
     
-    # Deduplicate and merge sources
     deduplicated = deduplicate_results(flattened_results)
     
-    # Generate citations
     for paper in deduplicated:
         paper.bibtex = generate_bibtex(paper)
         paper.ris = generate_ris(paper)
+        format_all_citations(paper)
     
-    # Ranking Logic: DOI availability, Relevance, Citations, Recency
-    # Sort by: DOI (binary), then citation count, then year
     deduplicated.sort(key=lambda x: (
         1 if x.doi else 0,
         x.citation_count or 0,
@@ -111,7 +126,23 @@ async def search(q: str = Query(..., min_length=1)):
         query=q
     )
 
+@app.get("/search/authors", response_model=AuthorSearchResponse)
+async def search_authors(q: str = Query(..., min_length=1)):
+    tasks = [adapter.search_authors(q) for adapter in adapters]
+    all_results = await asyncio.gather(*tasks)
+    flattened_results = [author for sublist in all_results for author in sublist]
+    
+    deduplicated = deduplicate_authors(flattened_results)
+    
+    # Sort by impact (citation count or h-index)
+    deduplicated.sort(key=lambda x: (x.citation_count or 0, x.h_index or 0), reverse=True)
+    
+    return AuthorSearchResponse(
+        results=deduplicated,
+        total_found=len(deduplicated),
+        query=q
+    )
+
 if __name__ == "__main__":
     import uvicorn
-    # Render uses port 10000 by default
     uvicorn.run(app, host="0.0.0.0", port=10000)

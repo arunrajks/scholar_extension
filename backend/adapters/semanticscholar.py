@@ -60,3 +60,36 @@ class SemanticScholarAdapter(BaseAdapter):
         except Exception as e:
             print(f"Semantic Scholar Error: {e}")
             return []
+
+    async def search_authors(self, query: str, limit: int = 10) -> List[Researcher]:
+        url = "https://api.semanticscholar.org/graph/v1/author/search"
+        params = {
+            "query": query,
+            "limit": limit,
+            "fields": "name,affiliations,hIndex,citationCount,paperCount,url"
+        }
+        
+        try:
+            data = await self.fetch_json(url, params=params)
+            items = data.get("data", [])
+            
+            from models import Researcher
+            results = []
+            for item in items:
+                affiliations = item.get("affiliations", [])
+                affiliation = affiliations[0] if affiliations else None
+                
+                results.append(Researcher(
+                    name=item.get("name", "Unknown Researcher"),
+                    id=item.get("authorId"),
+                    affiliation=affiliation,
+                    h_index=item.get("hIndex", 0),
+                    citation_count=item.get("citationCount", 0),
+                    paper_count=item.get("paperCount", 0),
+                    url=item.get("url"),
+                    source="Semantic Scholar"
+                ))
+            return results
+        except Exception as e:
+            print(f"Semantic Scholar Author Error: {e}")
+            return []

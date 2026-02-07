@@ -4,8 +4,28 @@ document.addEventListener('DOMContentLoaded', () => {
     const resultsList = document.getElementById('results-list');
     const loading = document.getElementById('loading');
     const statusMsg = document.getElementById('status-message');
+    const tabPapers = document.getElementById('tab-papers');
+    const tabResearchers = document.getElementById('tab-researchers');
 
-    const API_URL = 'https://scholarly-search-api-70wp.onrender.com/search';
+    let currentMode = 'papers';
+    const API_BASE_URL = 'https://scholarly-search-api-70wp.onrender.com';
+
+    // Tab switching
+    const setMode = (mode) => {
+        currentMode = mode;
+        if (mode === 'papers') {
+            tabPapers.classList.add('active');
+            tabResearchers.classList.remove('active');
+            searchInput.placeholder = 'Search papers, DOIs, journals...';
+        } else {
+            tabResearchers.classList.add('active');
+            tabPapers.classList.remove('active');
+            searchInput.placeholder = 'Search scholars, authors, h-index...';
+        }
+    };
+
+    tabPapers.addEventListener('click', () => setMode('papers'));
+    tabResearchers.addEventListener('click', () => setMode('researchers'));
 
     const performSearch = async () => {
         const query = searchInput.value.trim();
@@ -15,47 +35,41 @@ document.addEventListener('DOMContentLoaded', () => {
         loading.classList.remove('hidden');
         statusMsg.classList.add('hidden');
 
+        const endpoint = currentMode === 'papers' ? '/search' : '/search/authors';
+
         try {
-            const response = await fetch(`${API_URL}?q=${encodeURIComponent(query)}`);
+            const response = await fetch(`${API_BASE_URL}${endpoint}?q=${encodeURIComponent(query)}`);
             if (!response.ok) throw new Error('Failed to fetch results');
 
             const data = await response.json();
-            renderResults(data.results);
+            if (currentMode === 'papers') {
+                renderPaperResults(data.results);
+            } else {
+                renderResearcherResults(data.results);
+            }
         } catch (error) {
             console.error(error);
-            showStatus('Error: Make sure the backend server relative to http://localhost:8000 is running.', 'error');
+            showStatus('Error: Backend server may be offline.', 'error');
         } finally {
             loading.classList.add('hidden');
         }
     };
 
-    const renderResults = (papers) => {
-        if (!papers || papers.length === 0) {
-            resultsList.innerHTML = `
-                <div class="empty-state">
-                    <p>No results found for your query.</p>
-                </div>
-            `;
+    const renderPaperResults = (results) => {
+        if (!results || results.length === 0) {
+            showEmpty('No papers found.');
             return;
         }
 
-        papers.forEach(paper => {
+        results.forEach(paper => {
             const card = document.createElement('div');
             card.className = 'paper-card';
 
             const authorsStr = paper.authors.map(a => a.name).slice(0, 3).join(', ') +
                 (paper.authors.length > 3 ? ' et al.' : '');
 
-            // Find a primary "Open Source" link and an optional "Open PDF" link
-            const bestSource = paper.sources.find(s => s.access_type === 'oa' || s.label === 'Publisher Page') || paper.sources[0];
             const pdfSource = paper.sources.find(s => s.label === 'Open Access PDF');
-
-            let sourcesHtml = paper.sources.map(source => `
-                <div class="source-item">
-                    <a href="${source.url}" target="_blank" class="source-link">${source.label}</a>
-                    <span class="access-badge access-${source.access_type}">${source.access_type.toUpperCase()}</span>
-                </div>
-            `).join('');
+            const bestSource = paper.sources.find(s => s.access_type === 'oa') || paper.sources[0];
 
             card.innerHTML = `
                 <div class="source-badge">${paper.source_api}</div>
@@ -63,48 +77,90 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div class="paper-meta">
                     <div class="meta-item">📅 ${paper.year || 'N/A'}</div>
                     <div class="meta-item">👤 ${authorsStr || 'Unknown'}</div>
-                    ${paper.journal ? `<div class="meta-item">📖 ${paper.journal}</div>` : ''}
                     ${paper.citation_count ? `<div class="meta-item">📈 ${paper.citation_count} citations</div>` : ''}
                 </div>
                 
                 <div class="paper-actions">
-                    <a href="${bestSource?.url || '#'}" target="_blank" class="btn-action btn-paper">
-                        Open Source
-                    </a>
-                    ${pdfSource ? `
-                        <a href="${pdfSource.url}" target="_blank" class="btn-action btn-pdf">
-                            Open PDF
-                        </a>
-                    ` : ''}
-                </div>
-
-                <div class="source-links-section">
-                    <div class="source-links-title">Legitimate Sources</div>
-                    ${sourcesHtml}
+                    <a href="${bestSource?.url || '#'}" target="_blank" class="btn-action btn-paper">Open Source</a>
+                    ${pdfSource ? `<a href="${pdfSource.url}" target="_blank" class="btn-action btn-pdf">Open PDF</a>` : ''}
                 </div>
 
                 <div class="export-group">
-                    <button class="btn-action btn-export bibtex-btn" data-bibtex="${encodeURIComponent(paper.bibtex)}">Export BibTeX</button>
-                    <button class="btn-action btn-export ris-btn" data-ris="${encodeURIComponent(paper.ris)}">Export RIS</button>
+                    <button class="btn-export bibtex-btn" data-content="${encodeURIComponent(paper.bibtex)}" data-name="citation.bib">BibTeX</button>
+                    <button class="btn-export ris-btn" data-content="${encodeURIComponent(paper.ris)}" data-name="citation.ris">RIS</button>
+                </div>
+
+                <div class="citation-options">
+                    <div class="citation-header">Journal Styles:</div>
+                    <div class="style-list">
+                        ${Object.entries(paper.formatted_citations).map(([style, content]) => `
+                            <button class="btn-style" data-content="${encodeURIComponent(content)}" data-name="${style}.txt">${style}</button>
+                        `).join('')}
+                    </div>
                 </div>
             `;
             resultsList.appendChild(card);
         });
 
-        // Add event listeners for export buttons
-        document.querySelectorAll('.bibtex-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                const content = decodeURIComponent(e.target.dataset.bibtex);
-                downloadFile(content, 'citation.bib', 'text/plain');
-            });
-        });
+        attachActionListeners();
+    };
 
-        document.querySelectorAll('.ris-btn').forEach(btn => {
+    const renderResearcherResults = (results) => {
+        if (!results || results.length === 0) {
+            showEmpty('No scholars found.');
+            return;
+        }
+
+        results.forEach(res => {
+            const card = document.createElement('div');
+            card.className = 'paper-card researcher-card';
+
+            card.innerHTML = `
+                <div class="source-badge">${res.source}</div>
+                <div class="paper-title">${res.name}</div>
+                ${res.affiliation ? `<div class="affiliation">${res.affiliation}</div>` : ''}
+                
+                <div class="stats-grid">
+                    <div class="stat-item">
+                        <span class="stat-value">${res.h_index || 0}</span>
+                        <span class="stat-label">H-Index</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-value">${res.citation_count?.toLocaleString() || 0}</span>
+                        <span class="stat-label">Citations</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-value">${res.paper_count?.toLocaleString() || 0}</span>
+                        <span class="stat-label">Papers</span>
+                    </div>
+                </div>
+                
+                <div class="paper-actions" style="grid-template-columns: 1fr;">
+                    <a href="${res.url}" target="_blank" class="btn-action btn-paper">View Profile</a>
+                </div>
+            `;
+            resultsList.appendChild(card);
+        });
+    };
+
+    const attachActionListeners = () => {
+        document.querySelectorAll('.bibtex-btn, .ris-btn, .btn-style').forEach(btn => {
             btn.addEventListener('click', (e) => {
-                const content = decodeURIComponent(e.target.dataset.ris);
-                downloadFile(content, 'citation.ris', 'text/plain');
+                const content = decodeURIComponent(e.target.dataset.content);
+                const name = e.target.dataset.name;
+                downloadFile(content, name, 'text/plain');
             });
         });
+    };
+
+    const showEmpty = (msg) => {
+        resultsList.innerHTML = `<div class="empty-state"><p>${msg}</p></div>`;
+    };
+
+    const showStatus = (msg, type) => {
+        statusMsg.textContent = msg;
+        statusMsg.className = `status-message ${type}`;
+        statusMsg.classList.remove('hidden');
     };
 
     const downloadFile = (content, fileName, contentType) => {
