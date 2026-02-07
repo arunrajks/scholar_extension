@@ -84,8 +84,18 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             const response = await fetch(`${API_BASE_URL}${endpoint}?q=${encodeURIComponent(query)}`);
             if (!response.ok) {
-                const errorData = await response.json().catch(() => ({}));
-                throw new Error(errorData.detail || `Server error (${response.status})`);
+                let errorMessage = `Server error (${response.status})`;
+                try {
+                    const errorData = await response.json();
+                    errorMessage = errorData.detail || errorMessage;
+                } catch (e) {
+                    // If JSON parsing fails, try to get plain text error
+                    try {
+                        const errorText = await response.text();
+                        if (errorText && errorText.length < 100) errorMessage = errorText;
+                    } catch (textErr) { }
+                }
+                throw new Error(errorMessage);
             }
 
             const data = await response.json();
@@ -103,8 +113,8 @@ document.addEventListener('DOMContentLoaded', () => {
             });
 
         } catch (error) {
-            console.error('Search error:', error);
-            showStatus(`${error.message || 'Error connecting to server.'}`, 'error');
+            console.error('Search error details:', error);
+            showStatus(error.message || 'Error connecting to server.', 'error');
         } finally {
             loading.classList.add('hidden');
         }
